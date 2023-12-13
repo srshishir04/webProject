@@ -1,0 +1,40 @@
+from flask import Flask, render_template, request
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:dracoc3@localhost:3306/flight_game'
+db = SQLAlchemy(app)
+
+class Country(db.Model):
+    iso_country = db.Column(db.String(40), primary_key=True)
+    name = db.Column(db.String(40), unique=True)
+
+class Airport(db.Model):
+    ident = db.Column(db.String, primary_key=True)
+    name = db.Column(db.String(40), unique=True)
+    iso_country = db.Column(db.Integer, db.ForeignKey('iso_country'))
+    latitude_deg = db.Column(db.Float)
+    longitude_deg = db.Column(db.Float)
+
+@app.route('/', methods=['GET', 'POST'])
+def home():
+    countries = Country.query.all() or []
+    airports = []
+    selected_country = None
+    selected_airport = None
+    map_center = None
+
+    if request.method == 'POST':
+        selected_country = request.form.get('country')
+        selected_airport = request.form.get('airport')
+        if selected_country:
+            airports = Airport.query.filter_by(iso_country=selected_country).all() or []
+        if selected_airport:
+            airport_pick = Airport.query.filter_by(ident=selected_airport).first()
+            if airport_pick:
+                map_center = [airport_pick.latitude_deg, airport_pick.longitude_deg]
+
+    return render_template('index.html', countries=countries, airports=airports,
+                           selected_country=selected_country, selected_airport=selected_airport, map_center=map_center)
+if __name__ == '__main__':
+    app.run(debug=True)
