@@ -1,40 +1,68 @@
-from flask import Flask, render_template, request
-from flask_sqlalchemy import SQLAlchemy
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Explore world</title>
+    <style>
+        .dropdown {
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        #map {
+            margin-top: 30px;
+        }
+        .submit-button {
+            margin-left: 90px;
+        }
+    </style>
+    <script>
+        function initMap() {
+          var mapMid = [{{ map_pos[0] }}, {{ map_pos[1] }}];
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:dracoc3@localhost:3306/flight_game'
-db = SQLAlchemy(app)
+          if (!mapMid) return;
 
-class Country(db.Model):
-    iso_country = db.Column(db.String(40), primary_key=True)
-    name = db.Column(db.String(40), unique=True)
+          var map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 8,
+            center: {lat: mapMid[0], lng: mapMid[1]},
 
-class Airport(db.Model):
-    ident = db.Column(db.String, primary_key=True)
-    name = db.Column(db.String(40), unique=True)
-    iso_country = db.Column(db.Integer, db.ForeignKey('iso_country'))
-    latitude_deg = db.Column(db.Float)
-    longitude_deg = db.Column(db.Float)
+          });
+          new google.maps.Marker({
+            position: {lat: mapMid[0], lng: mapMid[1]},
+            map: map,
 
-@app.route('/', methods=['GET', 'POST'])
-def home():
-    countries = Country.query.all() or []
-    airports = []
-    country_choosen = None
-    airport_choosen = None
-    map_pos = None
+          });
+}
 
-    if request.method == 'POST':
-        country_choosen = request.form.get('country')
-        airport_choosen = request.form.get('airport')
-        if country_choosen:
-            airports = Airport.query.filter_by(iso_country=country_choosen).all() or []
-        if airport_choosen:
-            airport_select = Airport.query.filter_by(ident=airport_choosen).first()
-            if airport_select:
-                map_pos = [airport_select.latitude_deg, airport_select.longitude_deg]
-
-    return render_template('index.html', countries=countries, airports=airports,
-                           choosen_country=country_choosen, choosen_airport=airport_choosen, map_pos=map_pos)
-if __name__ == '__main__':
-    app.run(debug=True)
+    </script>
+    <script async defer
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBSLdg6JGi64DtPk-0E91muK89wsXDuCrY&callback=initMap"></script>
+</head>
+<body onload="initMap()">
+<h1>Flight Database Search</h1>
+<form method="POST">
+    <div class="dropdown">
+        <label for="country"><b>Country Search</b></label></br>
+        <select name="country" id="country">
+            {% for country in countries %}
+            <option value="{{ country.iso_country }}" {% if country_choosen== country.iso_country %} selected {% endif %}>
+                {{ country.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="dropdown">
+        <label for="airport"><b>Airport Search</b></label></br>
+        <select name="airport" id="airport">
+            {% for airport in airports %}
+            <option value="{{ airport.ident }}" {% if airport_choosen== airport.ident %} selected {% endif %}>
+                {{ airport.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="submit-button">
+        <input type="submit" value="Submit">
+    </div>
+</form>
+<div id="map" style="height: 400px; width: 100%;"></div>
+</body>
+</html>
