@@ -20,21 +20,21 @@ class Airport(db.Model):
 def home():
     countries = Country.query.all() or []
     airports = []
-    selected_country = None
-    selected_airport = None
-    map_center = None
+    country_choosen = None
+    airport_choosen = None
+    map_pos = None
 
     if request.method == 'POST':
-        selected_country = request.form.get('country')
-        selected_airport = request.form.get('airport')
-        if selected_country:
-            airports = Airport.query.filter_by(iso_country=selected_country).all() or []
-        if selected_airport:
-            airport_pick = Airport.query.filter_by(ident=selected_airport).first()
-            if airport_pick:
-                map_center = [airport_pick.latitude_deg, airport_pick.longitude_deg]
+        country_choosen = request.form.get('country')
+        airport_choosen = request.form.get('airport')
+        if country_choosen:
+            airports = Airport.query.filter_by(iso_country=country_choosen).all() or []
+        if airport_choosen:
+            airport_select = Airport.query.filter_by(ident=airport_choosen).first()
+            if airport_select:
+                map_pos = [airport_select.latitude_deg, airport_select.longitude_deg]
 
     return render_template('index.html', countries=countries, airports=airports,
-                           selected_country=selected_country, selected_airport=selected_airport, map_center=map_center)
+                           choosen_country=country_choosen, choosen_airport=airport_choosen, map_pos=map_pos)
 if __name__ == '__main__':
     app.run(debug=True)
